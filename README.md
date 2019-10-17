@@ -29,10 +29,21 @@ GPU with OpenGL 4.2
 
 ### Project Organization
 
-Header/       	- contains the header files
-Source/		- contains the source files. The file main.cpp is the entry point of the project
-media/		- contains 3D models
-shaders/	- contains shaders in GLSL 4.2 
+- Header       	 
+
+Contains the header files
+
+- Source		
+
+Contains the source files. The file main.cpp is the entry point of the project
+
+- media		
+
+Contains 3D models
+
+- shaders	 
+
+Contains shaders in GLSL 4.2 
 
 
 ### Compilation
