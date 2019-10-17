@@ -1,4 +1,7 @@
 
+![image](https://github.com/benjha/crowdVizSimpleMPI/blob/master/Screenshot.png)
+
+
 ## Description
 
 This example renders  sets of characters in a virtual environment using MPI for parallel rendering in multi-GPU and multi-node 
