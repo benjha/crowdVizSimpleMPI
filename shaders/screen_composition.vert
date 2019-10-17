@@ -1,0 +1,17 @@
+
+#version 430 core
+#extension GL_EXT_gpu_shader4: enable
+
+layout ( location = 0 ) in vec4 vertex;
+layout ( location = 1 ) in vec3 normal;
+layout ( location = 2 ) in vec2 uv;
+
+
+out vec2 UV;
+ 
+void main()
+{
+    gl_Position = vertex;
+  
+    UV = uv;
+}
