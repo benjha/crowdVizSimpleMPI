@@ -10,16 +10,16 @@ is performed.
 
 This project needs the following libraries previously installed:
 
--ASSIMP version 3. You might need compile ASSIMP's source code in your system in order to get version 3.
--GLEW
--Freeglut
--glm
--OpenMPI
--pthreads
+- ASSIMP version 3. You might need compile ASSIMP's source code in your system in order to get version 3.
+- GLEW
+- Freeglut
+- glm
+- OpenMPI
+- pthreads
 
 In a cluster environment:
 
--Any image transport library (e.g. virtualGL) installed in your cluster.
+- Any image transport library (e.g. virtualGL) installed in your cluster.
 
 
 GPU with OpenGL 4.2
@@ -43,7 +43,9 @@ In addition you will find the makefiles of the project in the  Debug directory, 
 
 ### Running 
 
+```
 mpi -np <N> <path/name of the executable>
+```
 
 where N is the number of nodes, it has been tested for N=1 to 9 nodes.
 
