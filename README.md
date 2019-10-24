@@ -4,10 +4,9 @@
 
 ## Description
 
-This example renders  sets of characters in a virtual environment using MPI for parallel rendering in multi-GPU and multi-node 
-environments. Each GPU renders a crowd, then the framebuffer is captured and the resultant image with depth is sent to the 
-master node, no fancy communications are performed such as binary-swap. In the master node sort-last composition using GLSL 
-is performed. 
+This example renders  sets of characters in a virtual environment using MPI for parallel rendering in GPU clusters. Each GPU 
+renders a crowd, then the framebuffer is captured and the resultant image with depth is sent to the  master node, no fancy 
+communications are performed such as binary-swap. In the master node sort-last composition using GLSL  is performed. 
 
 ### Dependencies
 
