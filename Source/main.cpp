@@ -15,7 +15,12 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <GL/glew.h>
-#include <GL/freeglut.h>
+
+#ifdef GLX
+ #include "glx_x11_events.h"
+#else
+	#include <GL/freeglut.h>
+#endif
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -97,7 +102,10 @@ void display(void)
 		}
 	}
 
+#ifdef GLX
+#else
 		glutSwapBuffers ();
+#endif
 }
 //
 //=======================================================================================
@@ -124,8 +132,10 @@ void display_master (void)
 		model->draw(GL_TEXTURE_2D, fboMasterColorTexId);
 	glUseProgram	(0);
 
-
+#ifdef GLX
+#else
 	glutSwapBuffers ();
+#endif
 
 }
 //
