@@ -16,8 +16,10 @@
 #include <mpi.h>
 #include <GL/glew.h>
 
-#ifdef GLX
- #include "glx_x11_events.h"
+
+
+#ifdef MULTIGPU
+	#include "glx_x11_events.h"
 #else
 	#include <GL/freeglut.h>
 #endif
@@ -72,6 +74,46 @@ ShaderInfo		screenComposition[] = {
 //
 //=======================================================================================
 //
+#ifdef MULTIGPU
+void display(RenderContext *rcx)
+{
+	int i,j;
+	myScreenType *ptr;
+
+	glClear			( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	camera->setView ( MVPmatUBO,  transformMat, WIN_WIDTH, WIN_HEIGHT);
+
+	glUseProgram	( passthruInstancingShader );
+		glUniform1i (colorLoc, pid );
+		glBindBufferBase		( GL_UNIFORM_BUFFER, 0, MVPmatUBO 	); // passing Modelview Projection matrix
+		model->drawInstanced	( NUM_CHARACTERS, GL_TEXTURE_BUFFER, agentPosTBO );
+	glUseProgram	(0);
+
+	//displayAxis ();
+
+	if (depthPixels)
+	{
+		// Reading color and depth information
+		glReadBuffer ( GL_BACK );
+		glReadPixels ( 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_RGBA, GL_FLOAT, (myScreenType*)colorPixels);
+		glReadPixels ( 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT, depthPixels );
+		// Storing depth into color pixels
+		ptr = (myScreenType*)colorPixels;
+		for (i=0, j=0;i<WIN_WIDTH*WIN_HEIGHT*4;i+=4,j++)
+		{
+			ptr[i+3] = depthPixels[j];
+		}
+	}
+
+	if (rcx->windowless)
+		glXSwapBuffers(rcx->dpy, rcx->pbuffer);
+	else
+		glXSwapBuffers(rcx->dpy, rcx->win);
+}
+#endif
+//
+//=======================================================================================
+//
 void display(void)
 {
 	int i,j;
@@ -102,10 +144,7 @@ void display(void)
 		}
 	}
 
-#ifdef GLX
-#else
-		glutSwapBuffers ();
-#endif
+	glutSwapBuffers ();
 }
 //
 //=======================================================================================
@@ -132,11 +171,7 @@ void display_master (void)
 		model->draw(GL_TEXTURE_2D, fboMasterColorTexId);
 	glUseProgram	(0);
 
-#ifdef GLX
-#else
 	glutSwapBuffers ();
-#endif
-
 }
 //
 //=======================================================================================
@@ -222,8 +257,24 @@ void idle (void)
 		uploadScreenTextures();
 	}
 
-	glutPostRedisplay ();
+	if (pid==0) // Master node uses GLUT
+		glutPostRedisplay ();
 }
+//
+//=======================================================================================
+//
+#ifdef MULTIGPU
+void glLoop (RenderContext *rcx)
+{
+	while (running)
+	{
+		if (pid!=0) // composite node
+			display (rcx);
+
+		idle	();
+	}
+}
+#endif
 //
 //=======================================================================================
 //
@@ -392,7 +443,7 @@ void freeAll_master ()
 //
 //=======================================================================================
 //
-void runRendering (int argc, char** argv)
+void runRenderingGLUT (int argc, char** argv)
 {
 	stringstream winTitle;
 	winTitle << "Process ID " << pid;
@@ -436,6 +487,47 @@ void runRendering (int argc, char** argv)
 
 	glutMainLoop();
 }
+//
+//=======================================================================================
+//
+#ifdef MULTIGPU
+void runRenderingGLX (int argc, char** argv)
+{
+	int col, row;
+	col = (pid) / 3;
+	row = (pid) - col * 3;
+
+	RenderContext rcx;
+
+	rcx.winWidth 	= WIN_WIDTH;
+	rcx.winHeight	= WIN_HEIGHT;
+	rcx.winX		= WIN_WIDTH*row;
+	rcx.winY		= WIN_HEIGHT*col+100;
+
+	initEarlyGLXfnPointers();
+
+	//Sintaxis only works for 2 GPUs
+	if (pid%2)
+		CreateWindow(&rcx, ":0.1", 4, 2);
+	else
+		CreateWindow(&rcx, ":0.0", 4, 2);
+
+	int glew_status = glewInit();
+	if( glew_status != GLEW_OK )
+	{
+		cout <<	"GLEW initialization failed!.\n";
+		exit	( 0 );
+	}
+	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
+
+	init ();
+
+	glLoop  		( &rcx );
+	closeContext 	( &rcx );
+	freeAll			(	);
+
+}
+#endif
 //
 //=======================================================================================
 //
@@ -613,20 +705,26 @@ int main(int argc, char** argv)
 		if (np == 1)
 		{
 			cout << "Status: Running in one node mode \n";
-			runRendering (argc, argv); // runs in rendering mode
+
+			runRenderingGLUT (argc, argv); // runs in single process rendering mode
 		}
 		else if (np > 1 )
 		{
 			cout << "runRenderingAndComposite\n";
 			initScreenArraysMaster();
-			runComposite  (argc, argv); // Runs composition mode
+			runComposite  (argc, argv); // Runs multi-process composition mode
 		}
 	}
 	else
 	{
 		cout << "runRendering\n";
 		initScreenArrays();
-		runRendering (argc, argv);
+#ifdef GLX
+		runRenderingGLX (argc, argv);
+#else
+		runRenderingGLUT (argc, argv);
+#endif
+
 	}
 
 
