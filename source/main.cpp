@@ -16,7 +16,7 @@
 #include <mpi.h>
 #include <GL/glew.h>
 
-
+#define MULTIGPU
 
 #ifdef MULTIGPU
 	#include "glx_x11_events.h"
@@ -24,13 +24,15 @@
 	#include <GL/freeglut.h>
 #endif
 
+#include "cModel.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "LoadShaders.h"
 #include "framebufferObject.h"
 #include "cCamera.h"
-#include "cModel.h"
+
 #include "cGlobals.h"
 
 using namespace std;
@@ -71,6 +73,8 @@ ShaderInfo		screenComposition[] = {
 	{ GL_FRAGMENT_SHADER,	"shaders/screen_composition.frag" },
 	{ GL_NONE,				NULL }
 };
+
+bool running = 0;
 //
 //=======================================================================================
 //
@@ -266,7 +270,9 @@ void idle (void)
 #ifdef MULTIGPU
 void glLoop (RenderContext *rcx)
 {
-	while (running)
+	// TODO: runnig var. should be set to true by the master and sent to the workers
+	//while (running)
+	while (true)
 	{
 		if (pid!=0) // composite node
 			display (rcx);
@@ -679,6 +685,8 @@ void runComposite (int argc, char** argv)
 	glutIdleFunc 			( idle				);
 	glutCloseFunc			( freeAll_master	);
 
+
+
 	glutMainLoop();
 }
 //
@@ -719,7 +727,7 @@ int main(int argc, char** argv)
 	{
 		cout << "runRendering\n";
 		initScreenArrays();
-#ifdef GLX
+#ifdef MULTIGPU
 		runRenderingGLX (argc, argv);
 #else
 		runRenderingGLUT (argc, argv);

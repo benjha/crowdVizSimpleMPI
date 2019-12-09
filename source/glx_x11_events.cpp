@@ -80,7 +80,7 @@ void CreateWindow(RenderContext *rcx, const char* display, int mayorGLversion, i
 
     if (!rcx->dpy)
     {
-    	cout << "XOpenDisplay can't open the display. \n";
+    	cout << "XOpenDisplay can't open display " << display << "\n";
     	exit (0);
     }
     // Get Version info
