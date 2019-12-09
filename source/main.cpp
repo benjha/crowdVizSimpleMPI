@@ -16,7 +16,7 @@
 #include <mpi.h>
 #include <GL/glew.h>
 
-#define MULTIGPU
+//#define MULTIGPU
 
 #ifdef MULTIGPU
 	#include "glx_x11_events.h"
@@ -243,14 +243,6 @@ void idle (void)
 	frames++;
 	time_=glutGet(GLUT_ELAPSED_TIME);
 
-	if (time_ - timebase > 1000) {
-		fps	= frames*1000.0f/(time_-timebase);
-		printf ("Process: %d FPS:%4.2f ms:%4.3f \n",pid, fps, 1.0f/fps*1000.0f);
-		timebase	= time_;
-		frames		= 0;
-
-	}
-
 	if (np>1)
 	{
 		sendReceiveFrames 		();
@@ -261,8 +253,22 @@ void idle (void)
 		uploadScreenTextures();
 	}
 
+	if (pid==0)
+	{
+		if (time_ - timebase > 1000)
+		{
+			fps	= frames*1000.0f/(time_-timebase);
+			printf ("Process: %d FPS:%4.2f ms:%4.3f \n",pid, fps, 1.0f/fps*1000.0f);
+			timebase	= time_;
+			frames		= 0;
+		}
+	}
+
+#if	MULTIGPU
 	if (pid==0) // Master node uses GLUT
+#else
 		glutPostRedisplay ();
+#endif
 }
 //
 //=======================================================================================
@@ -331,8 +337,8 @@ void init (void)
 
 	if (np > 2 )
 	{
-		col = (pid-1) / 3;
-		row = (pid-1) - col * 3;
+		col = (pid-1) / 5;
+		row = (pid-1) - col * 5;
 		cout << "pid: " << pid << " col: " << col << " row: " << row  << endl;
 
 		for (i=0;i<NUM_CHARACTERS*3;i+=3)
@@ -452,11 +458,12 @@ void freeAll_master ()
 void runRenderingGLUT (int argc, char** argv)
 {
 	stringstream winTitle;
+
 	winTitle << "Process ID " << pid;
 
 	int col, row;
-	col = (pid) / 3;
-	row = (pid) - col * 3;
+	col = (pid) / 5;
+	row = (pid) - col * 5;
 
 
 	glutInit				( &argc, argv);
@@ -467,17 +474,20 @@ void runRenderingGLUT (int argc, char** argv)
 	glutInitContextProfile	( GLUT_COMPATIBILITY_PROFILE	);
 	glutInitWindowSize		( WIN_WIDTH, WIN_HEIGHT			);
 
-	glutInitWindowPosition	( WIN_WIDTH*row, WIN_HEIGHT*col+100);
+	glutInitWindowPosition	( (WIN_WIDTH+10)*row, (WIN_HEIGHT+30)*col+100);
 
 	glutCreateWindow		( winTitle.str().data() 		);
 
 	int glew_status = glewInit();
 	if( glew_status != GLEW_OK )
 	{
-		printf	( "GLEW initialization failed!.\n" );
+		std::cout << "Process ID " << pid << " GLEW initialization failed! " << glewGetErrorString(glew_status) << std::endl;
 		exit	( 0 );
 	}
-	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
+
+
+
+	cout << "Process ID " << " status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
 
 	init ();
 	//glutReshapeFunc			( reshape	);
@@ -521,7 +531,7 @@ void runRenderingGLX (int argc, char** argv)
 	int glew_status = glewInit();
 	if( glew_status != GLEW_OK )
 	{
-		cout <<	"GLEW initialization failed!.\n";
+		std::cout << "Process ID " << pid << " GLEW initialization failed!" << glewGetErrorString(glew_status);
 		exit	( 0 );
 	}
 	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
@@ -670,10 +680,10 @@ void runComposite (int argc, char** argv)
 	int glew_status = glewInit();
 	if( glew_status != GLEW_OK )
 	{
-		printf	( "GLEW initialization failed!.\n" );
+		std::cout << "Process ID " << pid << " GLEW initialization failed!.\n";
 		exit	( 0 );
 	}
-	cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
+	cout << "Process ID " << pid << " Status: Using GLEW " << glewGetString(GLEW_VERSION) << endl;
 
 	//init 					(	);
 	init_master 			(	);
@@ -705,7 +715,6 @@ int main(int argc, char** argv)
 
 	cout << "This is process " << pid << " Number of processes " << np << endl;
 
-
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	if ( pid == 0 ) // master node
@@ -718,14 +727,14 @@ int main(int argc, char** argv)
 		}
 		else if (np > 1 )
 		{
-			cout << "runRenderingAndComposite\n";
+			cout << "Process ID " << pid << " runRenderingAndComposite\n";
 			initScreenArraysMaster();
 			runComposite  (argc, argv); // Runs multi-process composition mode
 		}
 	}
 	else
 	{
-		cout << "runRendering\n";
+		cout << "Process ID " << pid << " runRendering\n";
 		initScreenArrays();
 #ifdef MULTIGPU
 		runRenderingGLX (argc, argv);

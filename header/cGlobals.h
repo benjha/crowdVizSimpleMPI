@@ -10,8 +10,8 @@
 #ifndef CGLOBALS_H_
 #define CGLOBALS_H_
 
-#define			WIN_WIDTH		256
-#define			WIN_HEIGHT		256
+#define			WIN_WIDTH		500
+#define			WIN_HEIGHT		300
 #define 		NUM_CHARACTERS	2048
 #define 		PLANE_SIZE		2048 // the area size where the characters are displayed
 #define 		NUM_THREADS		1

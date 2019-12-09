@@ -16,7 +16,19 @@ layout ( binding = 0  ) uniform tranform
 
 layout (binding = 1 ) uniform samplerBuffer agentPos;
 
- vec3 COLOR_MASKS[9];
+#define SIZE 9
+vec3 COLOR_MASKS[SIZE] =
+{
+	vec3( 0.0, 0.5, 0.0 ),
+	vec3( 0.0, 0.38, 0.27 ),
+  	vec3( 1.0, 0.5, 0.5 ),
+	vec3( 0.5, 1.0, 0.5 ),
+	vec3( 0.5, 0.5, 1.0 ),
+	vec3( 0.5, 1.0, 1.0 ),
+	vec3( 1.0, 0.5, 1.0 ),
+	vec3( 1.0, 1.0, 0.5 ),
+	vec3( 0.54, 0.49, 0.42 )
+};
 
 
 uniform int color;
@@ -52,7 +64,7 @@ void initColorMask ()
 //
 void main ()
 {
-	initColorMask ();
+	//initColorMask ();
 	vec4 pos 	= texelFetchBuffer(agentPos, gl_InstanceID);
 	
 	pos.w		= 1.0;
@@ -60,7 +72,10 @@ void main ()
 	mat4 MVP	= Transform.projection * Transform.view * Transform.model;
 	vOut.N 		= normals;
 	vOut.UV 	= uv;
-	vOut.color 	= vec4 (COLOR_MASKS[color],1.0);
+		
+	int id = int (mod(color, SIZE));
+	
+	vOut.color 	= vec4 (COLOR_MASKS[id],1.0);
 		
 	gl_Position = MVP * ( vertex + pos);
 }
