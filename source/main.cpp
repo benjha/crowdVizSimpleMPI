@@ -474,7 +474,7 @@ void runRenderingGLUT (int argc, char** argv)
 	glutInitContextProfile	( GLUT_COMPATIBILITY_PROFILE	);
 	glutInitWindowSize		( WIN_WIDTH, WIN_HEIGHT			);
 
-	glutInitWindowPosition	( (WIN_WIDTH+10)*row, (WIN_HEIGHT+30)*col+100);
+	glutInitWindowPosition	( (WIN_WIDTH+10)*row+100, (WIN_HEIGHT+30)*col);
 
 	glutCreateWindow		( winTitle.str().data() 		);
 
